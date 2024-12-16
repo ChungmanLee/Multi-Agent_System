@@ -1,0 +1,62 @@
+agent Flasher {
+    module Console console;
+    module System system;
+
+    // define types
+    types flashing_ont {
+        formula transition(string, string);
+        formula switch(string);
+        formula light(string, string);
+    }
+
+    // initialize beliefs
+    initial switch("off");
+    initial light("l1", "off");
+    initial transition("off", "on");
+    initial transition("on", "off");
+    
+    // rules
+    // if the switch's status is changed, light will be changed
+    rule +switch(string S) {
+        !light("l1", S);
+    }
+
+    // rule for changing light
+    rule +!light(string L, string S) : transition(string R, S) & light(L, R) {
+        -light(L, R);
+        +light(L, S);
+        console.println("Light: " + L + " is in state:" + S);
+    }
+
+    // rule for keeping light status (no actions)
+    rule +!light(string L, string S) { 
+        console.println("Light: " + L +" is in state: " + S);
+    }
+
+    // // I can refactore like this to combine the light rule with if statement.
+    // rule +!light(string L, string S) : transition(string R, S) {
+    //     if (light(L, R)){
+    //         -light(L, R);
+    //         +light(L, S);
+    //         console.println("Light: " + L + " is in state: " + S);
+    //     }else{
+    //         console.println("Light: " + L +" is in state: " + S);
+    //     }
+    // }
+
+    // rule to flash the light X times with recursion
+    rule +!flip(0) {}
+    rule +!flip(int X) : switch(string S) & transition(S, string T) {
+        -switch(S);
+        +switch(T);
+        system.sleep(200);
+        !flip(X-1);
+    }
+
+    // start the flashing
+    rule +!main(list args) {
+        system.sleep(2000);
+        console.println("Starting on and off 10 times");
+        !flip(10);
+    }
+}

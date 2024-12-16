@@ -1,0 +1,21 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+		 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+    <groupId>lab2</groupId>
+    <artifactId>part1</artifactId>
+    <version>1.0.0</version>
+    <name>lab2:{part1}</name>
+    <description>Sample ASTRA Project</description>
+
+    <properties>
+        <astra.main>Basics</astra.main>
+    </properties>
+
+    <parent>
+        <groupId>com.astralanguage</groupId>
+        <artifactId>astra-base</artifactId>
+        <version>1.3.4</version>
+    </parent>
+</project>
+
