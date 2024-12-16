@@ -1,0 +1,35 @@
+agent Main extends Player{
+    module System S;
+    //Player O won configuration
+    // initial played("O", 1), played("X", 2);
+    // initial played("O", 5), played("X", 9);
+    // initial played("O", 7), played("X", 3);
+    // initial played("O", 4);
+
+    //Drown configuration
+    // initial played("O", 1), played("X", 5);
+    // initial played("O", 7), played("X", 4);
+    // initial played("O", 6), played("X", 8);
+    // initial played("O", 2), played("X", 3);
+    // initial played("O", 9);
+    
+    //winner: X
+    // initial turn("X");
+    
+    //winnder:O
+    initial turn("O");
+
+    rule +!main(list args) {
+        S.sleep(1000);
+        if (winner(string X))
+            C.println("Player " + X + " won.");
+        if (loser(string Y))
+            C.println("Player " + Y + " lose.");
+        if (drawn())
+            C.println("Drown.");
+        if (free(int L))
+            C.println("First free location: " + L);
+        if (~played(string T, int L))
+            C.println("Game has not Started");
+    }
+}

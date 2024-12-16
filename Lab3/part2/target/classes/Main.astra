@@ -1,0 +1,22 @@
+agent Main{
+    module Console console;
+    module System system;
+    
+    rule +!main(list args) {
+        system.createAgent("Player1", "Player");
+        system.createAgent("Player2", "Player");
+
+        // O win
+        // system.setMainGoal("Player1", ["O", true]);
+
+        // X can't start the game
+        // system.setMainGoal("Player2", ["X", false]);
+
+        // X win
+        system.setMainGoal("Player2", ["X", true]);
+
+        // basically, they are not interacting with eachother, so they play a game by themselves.
+
+        system.sleep(1000);
+    }
+}

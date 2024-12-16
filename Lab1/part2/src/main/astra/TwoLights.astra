@@ -1,0 +1,57 @@
+agent TwoLights {
+    module Console console;
+
+    // define types
+    types twolights_ont{
+        formula transition(string, string);
+        formula switch(string);
+        formula light(string, string);
+    }
+
+    // initialize beliefs
+    // added one more light
+    initial switch("on");
+    initial light("l1", "on");
+    initial light("l2", "off");
+    initial transition("off", "on");
+    initial transition("on", "off");
+
+    // rules
+    // if the switch's status is changed, light will be changed
+    // the switch is connected with both light
+    rule +switch(string S) {
+        !light("l1", S);
+        !light("l2", S);
+    }
+
+    // rull for changing light (paramiter is the name of the light)
+    rule +!light(string L, string S) : transition(string R, S) & light(L, R) {
+        console.println("Light: " + L + " is in state: " + R);
+        -light(L, R);
+        +light(L, S);
+        console.println("Light: " + L + " is in state: " + S);
+    }
+
+
+    // rule for keeping light status (no actions)
+    rule +!light(string L, string S) { 
+        console.println("Light: " + L +" is in state: " + S);
+    }
+
+    // // I can refactore like this to combine the light rules with if statement.
+    // rule +!light(string L, string S) : transition(string R, S) {
+    //     if (light(L, R)){
+    //         console.println("Light: " + L +" is in state: " + R);
+    //         -light(L, R);
+    //         +light(L, S);
+    //         console.println("Light: " + L + " is in state: " + S);
+    //     }else{
+    //         console.println("Light: " + L +" is in state: " + S);
+    //     }
+    // }
+
+    // define first action
+    rule +!main(list args) {
+        +switch("on");
+    }
+}

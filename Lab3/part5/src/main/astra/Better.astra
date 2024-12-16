@@ -1,0 +1,55 @@
+agent Better extends Player{
+
+    // The basic stratigy is marking on one of the corners first because if I'm the first player and the other doesn't block the center, I can win 100%.
+    //In addition, if the other player marked on the center, I should mark the corner, or I will lose. So marking corner has more advantages. Furthermore, easy to make double almost(int) naturally.
+
+    types bettertictactoe {
+        formula danger(int);
+        formula almost(int);
+    }
+
+    //add inference to know that the opponent is about to win. Separate them to improve readability.
+    inference danger(int N3) :- token(string T) & player(string O) & T ~= O & line(int N1, int N2, N3) & played(O, N1) & played(O, N2) & free(N3);
+    inference danger(int N2) :- token(string T) & player(string O) & T ~= O & line(int N1, N2, int N3) & played(O, N1) & played(O, N3) & free(N2);
+    inference danger(int N1) :- token(string T) & player(string O) & T ~= O & line(N1, int N2, int N3) & played(O, N2) & played(O, N3) & free(N1);
+
+    //add inference to know that I almost win.
+    inference almost(int N3) :- token(string T) & line(int N1, int N2, N3) & played(T, N1) & played(T, N2) & free(N3);
+    inference almost(int N2) :- token(string T) & line(int N1, N2, int N3) & played(T, N1) & played(T, N3) & free(N2);
+    inference almost(int N1) :- token(string T) & line(N1, int N2, int N3) & played(T, N2) & played(T, N3) & free(N1);
+    
+    //now, add move strategy
+    // Firstly, if I won almost, finish it.
+    rule +!move(int L) : almost(int A) { L=A; }
+    // Secondly, another player is about to make a line, block it.
+    rule +!move(int L) : danger(int D) { L=D;}
+
+    // But it's same for me also, so block center if the other player set the corner and the center is empty when I'm not the first player. This can defence the case when the other player marked on 2 first, I makred on 9, and the other player marked on 7. I don't have to block it when I'm the first player because I can win if the other player didn't block the center.
+    rule +!move(int L) : token(string T) & player(string O) & T ~= O & played(O, 1) & free(5) & first(false) { L=5; }
+    rule +!move(int L) : token(string T) & player(string O) & T ~= O & played(O, 3) & free(5) & first(false) { L=5; }
+    rule +!move(int L) : token(string T) & player(string O) & T ~= O & played(O, 7) & free(5) & first(false) { L=5; }
+    rule +!move(int L) : token(string T) & player(string O) & T ~= O & played(O, 9) & free(5) & first(false) { L=5; }
+
+    // If the other player mark on 3 -> 7 or 1 -> 9, I shouldn't mark at the corner.
+    rule +!move(int L) :token(string T) & player(string O) & T ~= O & played (O, 1) & played(O, 9) & free(3) & free(7) { L=2;}
+    rule +!move(int L) :token(string T) & player(string O) & T ~= O & played (O, 3) & played(O, 7) & free(1) & free(9) { L=2;}
+
+    // To win, mark at a better place first.
+    rule +!move(int L) : free(9) & free(8) & free(6) { L=9; }
+    rule +!move(int L) : free(7) & free(4) & free(8) { L=7; }
+    rule +!move(int L) : free(3) & free(2) & free(6) { L=3; }
+    rule +!move(int L) : free(1) & free(2) & free(4) { L=1; }
+
+    // Fill the other corners if it's empty
+    rule +!move(int L) : free(9) { L=9; }
+    rule +!move(int L) : free(1) { L=1; }
+    rule +!move(int L) : free(7) { L=7; }
+    rule +!move(int L) : free(3) { L=3; }
+
+    // And add other move rules for the draw cases
+    rule +!move(int L) : free(2) { L=2; }
+    rule +!move(int L) : free(4) { L=4; }
+    rule +!move(int L) : free(5) { L=5; }
+    rule +!move(int L) : free(6) { L=6; }
+    rule +!move(int L) : free(8) { L=8; }
+}

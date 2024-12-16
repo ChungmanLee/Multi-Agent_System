@@ -1,0 +1,158 @@
+agent Main {
+    module EIS ei;
+    module Console C;
+    module System S;
+    module Math M;
+    module Prelude prelude;
+
+    types tower {
+        formula block(string);
+        formula free(string);
+        formula tower(string, string, string, string, string, string, string);
+        formula tower(string, string, string, string);
+    }
+    
+    //add inference
+    inference free(string A) :- ~ei.on(string B, A);
+    inference tower(string A, string B, string C, string D, string E, string F, string G) :- ei.on(G, F) & ei.on(F, E) & ei.on(E, D) & ei.on(D, C) & ei.on(C, B) & ei.on(B, A) & ei.on(A, "table");
+    inference tower(string A, string B, string C, string D) :- ei.on(D, C) & ei.on(C, B) & ei.on(B, A) & ei.on(A, "table");
+
+
+    //rules to check tower is made or not
+
+    rule +$ei.event(block("g")) {
+        //inicial blocks setting complete message
+        C.println("New Perception Event: block(\"g\")");
+        C.println("You did it!");
+        !random_tower(["a", "b", "c", "d", "e", "f", "g"]);
+    }  
+
+    //on rules
+    rule +!on(string A, string B) : ei.on(A, B) {}
+
+    rule +!on(string A, string B) : ei.holding(A) & free(B) {
+        ei.putdown(A, B);
+        wait(ei.on(A, B));
+    }
+
+    rule +!on(string A, string B) : ~free(B) {
+        !free(B);
+        !on(A, B);
+    }
+
+    rule +!on(string A, string B) : ~ei.holding(A) {
+        !holding(A);
+        !on(A, B);
+    }
+
+    //holding rules
+    rule +!holding(string A) : ei.holding(A){
+    }
+
+    rule +!holding(string A) : ~ei.holding(A) & free(A){
+        ei.pickup(A);
+        wait(ei.holding(A));
+    }
+
+    rule +!holding(string A) : ~ei.holding(A) & ~free(A){
+        !free(A);
+        ei.pickup(A);
+        wait(ei.holding(A));
+    }
+
+    //free rules
+    rule +!free("table"){
+        C.println("Table is always free");
+        +free("table");
+    }
+
+    rule +!free(string A) : free(A) {
+        C.println(A + " is already free.");
+    }
+
+    rule +!free(string A) : ~free(A) & ei.on(string B, A) & free(B){
+        C.println(B + " is on top of " + A);
+        !holding(B);
+        !on(B, "table");
+        wait(ei.on(B, "table"));
+        C.println(A + " IS FREE NOW");
+    }
+
+    rule +!free(string A) : ~free(A) & ei.on(string B, A) & ~free(B){
+        !free(B);
+        C.println(B + " is on top of " + A);
+        !holding(B);
+        !on(B, "table");
+        wait(ei.on(B, "table"));
+        C.println(A + " IS FREE NOW");
+    }
+    
+    //rule to shuffle the list - refered to https://guide.astralanguage.com/en/latest/lists/#shuffle-and-sort-example
+    rule +!shuffle(list in, list out, int N) {
+        out = in;
+        int i=0;
+        while (i < N) {
+            int j = M.randomInt() % prelude.size(out);
+            int k = M.randomInt() % prelude.size(out);
+            prelude.swap(out, j, k);
+            i = i + 1;
+        }
+    }
+
+    //tower rule
+    //random tower rule
+    rule +!random_tower(list blocks) {
+        // Shuffle the list of blocks
+        !shuffle(blocks, list sb, 15);
+        C.println(sb);
+
+        !tower(sb, "table");
+
+        wait(tower(at_index(sb, 0, string), at_index(sb, 1, string), at_index(sb, 2, string), at_index(sb, 3, string), at_index(sb, 4, string), at_index(sb, 5, string), at_index(sb, 6, string)));
+        S.sleep(2000);
+
+        !shuffle(blocks, list sb2, 15);
+        sb2 = [at_index(sb2, 0, string), at_index(sb2, 1, string), at_index(sb2, 2, string), at_index(sb2, 3, string)];
+        C.println(sb2);
+
+        !tower(sb2, "table");
+
+        wait(tower(at_index(sb2, 0, string), at_index(sb2, 1, string), at_index(sb2, 2, string), at_index(sb2, 3, string)));
+
+        S.sleep(2000);
+        !random_tower(blocks);
+    }
+
+    // Recursive rule to build tower
+    rule +!tower([], string base_block) {
+    }
+
+    rule +!tower([string Head | list Tail], string base_block) {
+        !on(Head, base_block);
+        !tower(Tail, Head);
+    }
+
+    //main
+    rule +!main(list args) {
+        ei.launch("hw","dependency/tower-1.3.0.jar");
+        ei.init();
+	    ei.start();
+	    // ei.join("hw");
+        ei.link("gripper");
+        
+        C.println("Press New Block until block g is created...");
+    }
+
+    rule +$ei.event(on(string A, string B)){
+        C.println(A + " has been placed on: " + B);
+    }
+
+    rule +$ei.event(funct belief) {
+        C.println("New Perception Event: " + belief);
+    }
+
+    rule -$ei.event(funct belief) {
+        C.println("Removed Perception Event: " + belief);
+    }
+    
+}

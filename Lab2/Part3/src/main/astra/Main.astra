@@ -1,0 +1,61 @@
+agent Main {
+    module EIS ei;
+    module Console C;
+    module System S;
+
+    types tower {
+        formula block(string);
+        formula free(string);
+    }
+    
+    
+    rule +!main(list args) {
+        ei.launch("hw","dependency/tower-1.3.0.jar");
+        ei.init();
+	    ei.start();
+	    // ei.join("hw");
+        ei.link("gripper");
+        
+        C.println("Press New Block until block d is created...");
+    }
+
+    rule +$ei.event(block("d")) {
+        C.println("New Perception Event: block(\"d\")");
+        C.println("You did it!");
+        !tower("a", "b", "c");
+
+        //part3-3 this will not run because !tower is hard code and it's not with practical reasoning. This will be solved in the next part.
+        // !tower("d", "c", "b");
+    }
+    
+    //part3-2
+    rule +!tower(string A, string B, string C){
+        ei.pickup("b");
+
+        //part3-1
+        wait(ei.holding("b"));
+        ei.putdown("b", "c");
+        wait(ei.on("b", "c"));
+        C.println("TOWER BUILT");
+
+        S.sleep(2000);
+        ei.pickup("a");
+        wait(ei.holding("a"));
+        ei.putdown("a", "b");
+        wait(ei.on("a", "b"));
+        C.println("FINISHED ABC");
+    }
+
+    rule +$ei.event(on(string A, string B)){
+        C.println(A + " has been placed on: " + B);
+    }
+
+    rule +$ei.event(funct belief) {
+        C.println("New Perception Event: " + belief);
+    }
+
+    rule -$ei.event(funct belief) {
+        C.println("Removed Perception Event: " + belief);
+    }
+    
+}

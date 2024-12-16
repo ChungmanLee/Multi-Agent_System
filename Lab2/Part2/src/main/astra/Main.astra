@@ -1,0 +1,64 @@
+agent Main {
+    module EIS ei;
+    module Console C;
+    module System S;
+
+    types tower {
+        formula block(string);
+        formula free(string);
+    }
+    
+    
+    rule +!main(list args) {
+        ei.launch("hw","dependency/tower-1.3.0.jar");
+        ei.init();
+	    ei.start();
+	    // ei.join("hw");
+        ei.link("gripper");
+        
+        C.println("Press New Block until block d is created...");
+        // part2-4-4. remove the you did it part
+        // wait(ei.block("d"));
+        // C.println("You did it!");
+
+    }
+
+    //part2-4-4 print out when d block has been created and perform previous tasks
+    rule +$ei.event(block("d")) {
+        C.println("New Perception Event: block(\"d\")");
+        C.println("You did it!");
+
+        //part2-1
+        ei.pickup("a");
+
+        //part2-2
+        wait(ei.holding("a"));
+        ei.putdown("a", "b");
+        wait(ei.on("a", "b"));
+        C.println("TOWER BUILT");
+
+        //part2-3
+        S.sleep(2000);
+        ei.pickup("a");
+        wait(ei.holding("a"));
+        ei.putdown("a", "table");
+        wait(ei.on("a", "table"));
+        C.println("FINISHED");
+    }
+    
+    //part2-4-3 print out a message when a block moves on something
+    rule +$ei.event(on(string A, string B)){
+        C.println(A + " has been placed on: " + B);
+    }
+
+    //part2-4-1 print out the new perception when a belief has been changed  
+    rule +$ei.event(funct belief) {
+        C.println("New Perception Event: " + belief);
+    }
+
+    //part2-4-2 print out removed perception
+    rule -$ei.event(funct belief) {
+        C.println("Removed Perception Event: " + belief);
+    }
+    
+}

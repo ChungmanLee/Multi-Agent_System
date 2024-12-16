@@ -1,0 +1,115 @@
+agent LightBaby {
+    module Console console;
+    module System system;
+
+    // define types
+    types light_ont {
+        formula transition(string, string);
+        formula switch(string);
+        formula light(string, string);
+        formula light_threshold(int);
+        formula light_level(int);
+        formula hour_light(int, int);
+    }
+
+    // initialize beliefs
+    initial switch("off");
+    initial light("l1", "off");
+    initial light_threshold(750);
+    initial transition("on", "off");
+    initial transition("off", "on");
+    
+    // initialize beliefs for the light levels over 24 hours
+    initial hour_light(0, 1), hour_light(1, 1), hour_light(2, 1), hour_light(3, 1), hour_light(4, 1),
+           hour_light(5, 1), hour_light(6, 100), hour_light(7, 250), hour_light(8, 400),
+           hour_light(9, 800), hour_light(10, 1000), hour_light(11, 1000), hour_light(12, 1000),
+           hour_light(13, 1000), hour_light(14, 1000), hour_light(15, 800), hour_light(16, 700),
+           hour_light(17, 600), hour_light(18, 600), hour_light(19, 400), hour_light(20, 100),
+           hour_light(21, 100), hour_light(22, 1), hour_light(23, 1);
+
+    // rules
+    // if the switch's status is changed and light level is below the threshold, the light will be changed
+    rule +switch("on") : light_level(int Lux) & light_threshold(int Threshold) & Lux < Threshold {
+        !light("l1", "on");
+    }
+
+    rule +switch("on") : light_level(int Lux) & light_threshold(int Threshold) & Lux >= Threshold {
+        console.println("The Light Level(" + Lux + ") Is Over 750");
+        !light("l1", "off");
+    }
+
+    rule +switch("off") {
+        !light("l1", "off");
+    }
+    // // I can refactore like this to combine the light rule with if statement.
+    // rule +switch(string S) : light_level(int Lux) & light_threshold(int Threshold) {
+    //     if (S == "on" & Lux < Threshold) {
+    //         !light("l1", "on");
+    //     } else if (S == "on" & Lux >= Threshold) {
+    //         console.println("The Light Level(" + Lux + ") Is Over 750");
+    //         !light("l1", "off");
+    //     } else if (S == "off") {
+    //         !light("l1", "off");
+    //     } else {
+    //     }
+    // }
+
+    // rule for changing light
+    rule +!light(string L, string S) : transition(string R, S) & light(L, R) {
+        -+light(L, S);
+        console.println("Light: " + L + " is in state:" + S);
+    }
+
+    // rule for keeping light status (no actions)
+    rule +!light(string L, string S) { 
+        console.println("Light: " + L +" is in state: " + S);
+    }
+    // // I can refactore like this to combine the light rule with if statement.
+    // rule +!light(string L, string S) : transition(string R, S) {
+    //      if (light(L, R)){
+    //             -+light(L, S);
+    //             console.println("Light: " + L + " is in state:" + S);
+    //     }else{
+    //         console.println("Light: " + L +" is in state: " + S);
+    //     }
+    // }
+
+    // rule to update light level every hour
+    rule +!day_simulation(24) { 
+        !day_simulation(0); 
+    }
+
+    rule +!day_simulation(int hour) : hour_light(hour, int lux) {
+        -+light_level(lux);
+        system.sleep(1000);
+        !switch_simulation(hour);
+        !day_simulation(hour+1);
+    }
+
+    // simulate switch on at 10 am and off at 6 pm
+    rule +!switch_simulation(10) {
+        console.println("Current Time: " + 10 + " Trying to Switch On");
+        -+switch("on");
+    }
+
+    rule +!switch_simulation(18) {
+        console.println("Current Time: " + 18 + " Trying to Switch Off");
+        -+switch("off");
+    }
+
+    // if the switch is already on, light was off because of the light level, and light level become under the threshold, turn on the light
+    rule +!switch_simulation(int hour) : switch(string T) & light(string L, string S) & light_level(int Lux) & light_threshold(int Threshold) & T == "on" & Lux < Threshold & S == "off" {
+        console.println("Current Time: " + hour + ", Switch Is Already On And Current Lux(" + Lux + ") Is Less Than 750");
+        !light(L, "on");
+    }
+
+    // print out the time basically
+    rule +!switch_simulation(int hour) {
+        console.println("Current Time: " + hour);
+    }
+
+    // start the simulation
+    rule +!main(list args) {
+        !!day_simulation(0);
+    }
+}

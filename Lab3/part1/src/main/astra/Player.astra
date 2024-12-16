@@ -1,0 +1,74 @@
+agent Player {
+    module Console C;
+    module System S;
+    
+    // Inferences
+    types tictactoe {
+        formula played(string, int);
+        formula free(int);
+        formula winner(string);
+        formula loser(string);
+        formula drawn();
+        formula line(int, int, int);
+        formula move(int);
+        formula player(string);
+        formula location(int);
+        formula opponent(string, string);
+        formula turn(string);
+    }
+
+    inference free(int L) :- location(L) & ~played(string T, L);
+    inference winner(string T) :- line(int L1, int L2, int L3) &
+              played(T, L1) & played(T, L2) & played(T, L3);
+    inference loser(string T) :- player(T) & winner(string T2) & T ~= T2;
+    inference drawn() :- ~free(int L) & ~winner(string T2);
+    inference opponent(string T, string O) :- player(O) & O ~= T;
+
+    // Location
+    initial location(1), location(2), location(3);
+    initial location(4), location(5), location(6);
+    initial location(7), location(8), location(9);
+
+    // Winning lines
+    initial line(1, 2, 3), line(4, 5, 6), line(7, 8, 9);
+    initial line(1, 4, 7), line(2, 5, 8), line(3, 6, 9);
+    initial line(1, 3, 9), line(3, 5, 7);
+    initial player("X"), player("O");
+
+    rule +turn(string T) : player(T) & opponent(T, string T2) {
+        !move(int L);
+        !played(T, L);
+        C.println(T + " marked on " + L);
+        !turn(T2);
+    }
+
+    rule +!played(string T, int L) : free(L) {
+        +played(T, L);
+    }
+    
+    rule +!turn(string T2) : turn(string T) & winner(string W) {
+        -turn(T);
+        C.println("Winner: " + W);
+    }
+
+    rule +!turn(string T2) : turn(string T) & drawn() {
+        -turn(T);
+        C.println("Drawn!");
+    }
+    
+    rule +!turn(string T2) : turn(string T) {
+        -+turn(T2);
+    }
+
+    // Player movement strategy…
+    rule +!move(int L) : free(1) { L=1; }
+    rule +!move(int L) : free(2) { L=2; }
+    rule +!move(int L) : free(3) { L=3; }
+    rule +!move(int L) : free(4) { L=4; }
+    rule +!move(int L) : free(5) { L=5; }
+    rule +!move(int L) : free(6) { L=6; }
+    rule +!move(int L) : free(7) { L=7; }
+    rule +!move(int L) : free(8) { L=8; }
+    rule +!move(int L) : free(9) { L=9; }
+
+}

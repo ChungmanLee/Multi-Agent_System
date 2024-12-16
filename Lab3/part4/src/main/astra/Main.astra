@@ -1,0 +1,18 @@
+agent Main{
+    module Console console;
+    module System system;
+    
+    rule +!main(list args) {
+        system.createAgent("player1", "LinearPlayer");
+        // system.createAgent("player2", "LinearPlayer");
+        system.createAgent("player2", "Opponent");
+
+        // player2(X) win
+        // system.setMainGoal("player2", ["X", "player1", false]);
+        // system.setMainGoal("player1", ["O", "player2", true]);
+
+        // player2(O) win
+        system.setMainGoal("player1", ["O", "player2", false]);
+        system.setMainGoal("player2", ["X", "player1", true]);
+    }
+}

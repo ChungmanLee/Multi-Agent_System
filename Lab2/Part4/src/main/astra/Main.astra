@@ -1,0 +1,126 @@
+agent Main {
+    module EIS ei;
+    module Console C;
+    module System S;
+
+    types tower {
+        formula block(string);
+        formula free(string);
+        formula tower(string, string, string);
+    }
+    
+    //add inference
+    inference free(string A) :- ~ei.on(string B, A);
+    inference tower(string A, string B, string C) :- ei.on(A, B) & ei.on(B, C) & ei.on(C, "table");
+
+    rule +$ei.event(block("d")) {
+        //inicial blocks setting complete message
+        C.println("New Perception Event: block(\"d\")");
+        C.println("You did it!");
+
+        //tower abc build
+        !tower("a", "b", "c");
+        wait(tower("a", "b", "c"));
+        C.println("TOWER ABC BUILT");
+
+        //sleep for 2 seconds
+        S.sleep(2000);
+
+        //tower dcb build
+        !tower("d", "c", "b");
+        wait(tower("d", "c", "b"));
+        C.println("TOWER DCB BUILT");
+        C.println("FINISHED");
+    }  
+
+    //on rules
+    rule +!on(string A, string B) : ei.on(A, B) {}
+
+    rule +!on(string A, string B) : ei.holding(A) & free(B) {
+        ei.putdown(A, B);
+        wait(ei.on(A, B));
+    }
+
+    rule +!on(string A, string B) : ~free(B) {
+        !free(B);
+        !on(A, B);
+    }
+
+    rule +!on(string A, string B) : ~ei.holding(A) {
+        !holding(A);
+        !on(A, B);
+    }
+
+    //holding rules
+    rule +!holding(string A) : ei.holding(A){
+    }
+
+    rule +!holding(string A) : ~ei.holding(A) & free(A){
+        ei.pickup(A);
+        wait(ei.holding(A));
+    }
+
+    rule +!holding(string A) : ~ei.holding(A) & ~free(A){
+        !free(A);
+        ei.pickup(A);
+        wait(ei.holding(A));
+    }
+
+    //free rules
+    rule +!free("table"){
+        C.println("Table is always free");
+        +free("table");
+    }
+
+    rule +!free(string A) : free(A) {
+        C.println(A + " is already free.");
+    }
+
+    rule +!free(string A) : ~free(A) & ei.on(string B, A) & free(B){
+        C.println(B + " is on top of " + A);
+        !holding(B);
+        C.println("Holding " + B);
+        !on(B, "table");
+        wait(ei.on(B, "table"));
+        C.println(A + " IS FREE NOW");
+    }
+
+    rule +!free(string A) : ~free(A) & ei.on(string B, A) & ~free(B){
+        !free(B);
+        C.println(B + " is on top of " + A);
+        !holding(B);
+        !on(B, "table");
+        wait(ei.on(B, "table"));
+        C.println(A + " IS FREE NOW");
+    }
+
+    //tower rule
+    rule +!tower(string A, string B, string C) {
+        !on(C, "table");
+        !on(B, C);
+        !on(A, B);
+    }
+
+    rule +!main(list args) {
+        ei.launch("hw","dependency/tower-1.3.0.jar");
+        ei.init();
+	    ei.start();
+	    // ei.join("hw");
+        ei.link("gripper");
+        
+        C.println("Press New Block until block d is created...");
+    }
+
+    rule +$ei.event(on(string A, string B)){
+        C.println(A + " has been placed on: " + B);
+    }
+
+    rule +$ei.event(funct belief) {
+        C.println("New Perception Event: " + belief);
+    }
+
+    rule -$ei.event(funct belief) {
+        C.println("Removed Perception Event: " + belief);
+    }
+    
+}

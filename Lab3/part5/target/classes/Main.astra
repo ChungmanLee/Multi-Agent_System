@@ -1,0 +1,35 @@
+agent Main{
+    module Console console;
+    module System system;
+    
+    rule +!main(list args) {
+        system.createAgent("player1", "LinearPlayer");
+        system.createAgent("player2", "Opponent");
+        system.createAgent("player3", "Better");
+        system.createAgent("player4", "Better");
+
+        // player 1 first
+        // player 3(X) win
+        // system.setMainGoal("player3", ["X", "player1", false]);
+        // system.setMainGoal("player1", ["O", "player3", true]);
+
+        // player 2 first
+        // player 3(X) win
+        system.setMainGoal("player3", ["X", "player2", false]);
+        system.setMainGoal("player2", ["O", "player3", true]);
+
+        // player 3 first
+        // player 3(O) win
+        // system.setMainGoal("player1", ["X", "player3", false]);
+        // system.setMainGoal("player3", ["O", "player1", true]);
+
+        // player3 first
+        // player 3(O) win
+        // system.setMainGoal("player2", ["X", "player3", false]);
+        // system.setMainGoal("player3", ["O", "player2", true]);
+
+        // Drawn if fight between Betters
+        // system.setMainGoal("player3", ["X", "player4", false]);
+        // system.setMainGoal("player4", ["O", "player3", true]);
+    }
+}
